@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>多階層タグの条件表示</title>
+    <style>
+    h1,h2{
+        color: white;
+    }
+    
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 20px;
+        /* background-image: url('sora2.jpg'); 背景画像を指定 */
+        background-size: cover; /* 画像を画面全体に拡大 */
+        background-position: center; /* 画像を中央に配置 */
+        background-repeat: no-repeat; /* 画像を繰り返さない */
+    }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .element-container, .result-container, .final-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .element, .result, .final {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            width: 180px; /* 幅を調整 */
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-sizing: border-box;
+            background-color: white;
+        }
+        .element:hover, .result:hover, .final:hover {
+            background-color: #f0f0f0;
+        }
+        .selected {
+            background-color: #d1e7dd;
+        }
+        .hidden {
+            display: none;
+        }
+        .result img {
+            max-width: 100%; /* 画像の幅を要素に合わせる */
+            height: auto; /* 縦横比を維持 */
+            border-radius: 4px;
+        }
+
+        #video-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        #loading-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            z-index: -2;
+        }
+    </style>
+
+</head>
+<body>
+    <h1>アンチフィードシステム</h1>
+    <h2>気になる項目を３つ選んでください</h2>
+    <div class="element-container" id="elementContainer"></div>
+    <div class="result-container hidden" id="resultContainer"></div>
+    <div class="final-container hidden" id="finalContainer"></div>
+
+    <iframe id="video-background" src="https://www.youtube.com/embed/xbl3rtywYDI?autoplay=1&mute=1&loop=1&playlist=xbl3rtywYDI" frameborder="0" allow="autoplay; fullscreen"></iframe>
+    <!-- <iframe id="video-background" src="https://www.youtube.com/embed/5U6JBBDDPRY?autoplay=1&mute=1&loop=1&playlist=5U6JBBDDPRY" frameborder="0" allow="autoplay; fullscreen"></iframe> -->
+    <script>
+        // 50個の要素に3段階のタグ付け
+        // const elements = Array.from({ length: 50 }, (_, i) => {
+        //     // Main Tag: タグ1またはタグ2
+        //     const mainTag = i % 2 === 0 ? "タグ1" : "タグ2";
+
+        //     // Sub Tag: タグ1a, タグ1b, タグ2a, タグ2b
+        //     let subTag;
+        //     if (mainTag === "タグ1") {
+        //         subTag = i % 4 === 0 ? "タグ1a" : "タグ1b";
+        //     } else {
+        //         subTag = i % 4 === 1 ? "タグ2a" : "タグ2b";
+        //     }
+
+        //     // Sub-Sub Tag: タグ1a1, タグ1a2, タグ1b1, タグ1b2, タグ2a1, タグ2a2, タグ2b1, タグ2b2
+        //     let subSubTag;
+        //     if (subTag === "タグ1a") {
+        //         subSubTag = i % 6 === 0 ? "タグ1a1" : "タグ1a2";
+        //     } else if (subTag === "タグ1b") {
+        //         subSubTag = i % 6 === 1 ? "タグ1b1" : "タグ1b2";
+        //     } else if (subTag === "タグ2a") {
+        //         subSubTag = i % 6 === 2 ? "タグ2a1" : "タグ2a2";
+        //     } else {
+        //         subSubTag = i % 6 === 3 ? "タグ2b1" : "タグ2b2";
+        //     }
+
+        //     return {
+        //         text: `要素 ${i + 1}`,
+        //         mainTag: mainTag,
+        //         subTag: subTag,
+        //         subSubTag: subSubTag
+        //     };
+        // });
+        const elements =[
+            {text: '民族文化', number:1 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a1', imageUrl: '33.webp' },
+            {text: 'カルチャー研究', number:2 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a1', imageUrl: '41.webp' },
+            {text: '伝統芸能', number:3 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a1', imageUrl: '47.webp' },
+            {text: '人文科学', number:4 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a1', imageUrl: '50.webp' },
+            
+            {text: '音楽', number:5 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '2.webp' },
+            {text: 'テクノロジー', number:6 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '11.webp' },
+            {text: '手仕事', number:7 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '17.webp' },
+            {text: 'クリエイティブデザイン', number:8 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '20.webp' },
+            {text: '写真映像', number:9 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '23.webp' },
+            {text: '芸術パフォーマンス', number:10 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '27.webp' },
+            {text: '科学実験', number:11 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '28.webp' },
+            {text: '創作活動', number:12 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '29.webp' },
+            {text: 'ファッション・ビューティー', number:13 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '36.webp' },
+            {text: 'クリエイティブメディア', number:14 , mainTag: 'タグ1', subTag: 'タグ1a', subSubTag: 'タグ1a2', imageUrl: '37.webp' },
+            
+            {text: '映画', number:15 , mainTag: 'タグ1', subTag: 'タグ1b', subSubTag: 'タグ1b1', imageUrl: '8.webp' },
+            {text: 'メディアエンタメ', number:16 , mainTag: 'タグ1', subTag: 'タグ1b', subSubTag: 'タグ1b1', imageUrl: '18.webp' },
+
+            {text: 'ゲーム', number:17 , mainTag: 'タグ1', subTag: 'タグ1b', subSubTag: 'タグ1b2', imageUrl: 'game.webp' },
+            {text: 'サブカルチャー', number:18 , mainTag: 'タグ1', subTag: 'タグ1b', subSubTag: 'タグ1b2', imageUrl: '30.webp' },
+            {text: 'ストリートカルチャー', number:19 , mainTag: 'タグ1', subTag: 'タグ1b', subSubTag: 'タグ1b2', imageUrl: '35.webp' },
+            {text: 'ボードゲーム', number:20, mainTag: 'タグ1', subTag: 'タグ1b', subSubTag: 'タグ1b2', imageUrl: '5.webp' },
+
+            {text: '自然・動物', number:21, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a1', imageUrl: '6.webp' },
+            {text: 'スポーツ観戦', number:22, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a1', imageUrl: '13.webp' },
+            {text: '乗り物メカニック', number:23, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a1', imageUrl: '22.webp' },
+            {text: '動物ペット', number:24, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a1', imageUrl: '48.webp' },
+
+            {text: 'アウトドアスポーツ', number:25, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '3.webp' },
+            {text: '旅行', number:26, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '10.webp' },
+            {text: 'コレクション', number:27, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '12.webp' },
+            {text: '健康フィットネス', number:28, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '16.webp' },
+            {text: '自然エコ活動', number:29, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '21.webp' },
+            {text: 'DIY改造', number:30, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '26.webp' },
+            {text: '環境保護', number:31, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '38.webp' },
+            {text: 'チャレンジ挑戦', number:32, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '44.webp' },
+            {text: '新しいスキル習得', number:33, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '45.webp' },
+            {text: 'ホームインプルーブメント', number:34, mainTag: 'タグ2', subTag: 'タグ2a', subSubTag: 'タグ2a2', imageUrl: '49.webp' },
+
+            {text: '読書知識', number:35, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b1', imageUrl: '7.webp' },
+            {text: '言語', number:36, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b1', imageUrl: '9.webp' },
+            {text: '教育学習', number:37, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b1', imageUrl: '15.webp' },
+            {text: '自己啓発', number:38, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b1', imageUrl: '24.webp' },
+            {text: '料理食文化', number:39, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b1', imageUrl: '31.webp' },
+            {text: '自然科学', number:40, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b1', imageUrl: '34.webp' },
+            {text: '自己開発マインド', number:41, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b1', imageUrl: '43.webp' },
+
+            {text: '料理グルメ', number:42, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '4.webp' },
+            {text: '社交コミュニケーション', number:43, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '14.webp' },
+            {text: '知識テスト', number:44, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '19.webp' },
+            {text: 'コミュニケーションスキル', number:45, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '25.webp' },
+            {text: 'パズル', number:46, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '32.webp' },
+            {text: 'コミュニティ活動', number:47, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '39.webp' },
+            {text: '知的活動', number:48, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '40.webp' },
+            {text: 'ビジネス起業', number:49, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '42.webp' },
+            {text: '???', number:50, mainTag: 'タグ2', subTag: 'タグ2b', subSubTag: 'タグ2b2', imageUrl: '?.webp' },
+
+
+        ]
+        console.log(elements);
+        
+
+        function getRandomElements(tagFilter) {
+            const filteredElements = elements.filter(element => tagFilter ? element.mainTag === tagFilter : true);
+            return filteredElements.sort(() => 0.5 - Math.random()).slice(0, 10);
+        }
+
+        function displayElements() {
+            const container = document.getElementById("elementContainer");
+            const randomElements = getRandomElements();
+            container.innerHTML = "";
+
+            randomElements.forEach((element, index) => {
+                const div = document.createElement("div");
+                div.className = "element";
+                div.textContent = element.text; // タグ情報は非表示
+                div.setAttribute("data-index", element.number);
+                div.onclick = () => toggleSelection(div, "element");
+                container.appendChild(div);
+            });
+        }
+
+        function toggleSelection(element, type) {
+            element.classList.toggle("selected");
+            const selectedElements = document.querySelectorAll(`.${type}.selected`);
+
+            if (selectedElements.length > 3) {
+                selectedElements[0].classList.remove("selected");
+            }
+
+            if (selectedElements.length === 3) {
+                if (type === "element") {
+                    showResults();
+                } else if (type === "result") {
+                    showFinal();
+                }
+            }
+        }
+
+        function showResults() {
+            const selectedElements = document.querySelectorAll(".element.selected");
+            let tag1Count = 0;
+            let tag2Count = 0;
+
+            selectedElements.forEach(element => {
+                const index = element.getAttribute("data-index");
+                const mainTag = elements[index - 1].mainTag;
+                if (mainTag === "タグ1") {
+                    tag1Count++;
+                } else {
+                    tag2Count++;
+                }
+            });
+
+            const resultContainer = document.getElementById("resultContainer");
+            resultContainer.innerHTML = "";
+            resultContainer.classList.remove("hidden");
+
+            let itemsToShow;
+            if (tag1Count > tag2Count) {
+                const tag2aElements = elements.filter(element => element.subTag === "タグ2a");
+                const tag2bElements = elements.filter(element => element.subTag === "タグ2b");
+                const randomTag2a = tag2aElements.sort(() => 0.5 - Math.random()).slice(0, 5);
+                const randomTag2b = tag2bElements.sort(() => 0.5 - Math.random()).slice(0, 5);
+                itemsToShow = [...randomTag2a, ...randomTag2b];
+            } else {
+                const tag1aElements = elements.filter(element => element.subTag === "タグ1a");
+                const tag1bElements = elements.filter(element => element.subTag === "タグ1b");
+                const randomTag1a = tag1aElements.sort(() => 0.5 - Math.random()).slice(0, 5);
+                const randomTag1b = tag1bElements.sort(() => 0.5 - Math.random()).slice(0, 5);
+                itemsToShow = [...randomTag1a, ...randomTag1b];
+            }
+
+            itemsToShow.forEach(item => {
+                const div = document.createElement("div");
+                div.className = "result";
+
+                // 画像のみを表示
+                const img = document.createElement("img");
+                img.src = item.imageUrl;
+                div.appendChild(img);
+
+                div.setAttribute("data-index", elements.indexOf(item));
+                div.onclick = () => toggleSelection(div, "result");
+                resultContainer.appendChild(div);
+            });
+        }
+
+        function showFinal() {
+            const selectedResults = document.querySelectorAll(".result.selected");
+            let tag1aCount = 0;
+            let tag1bCount = 0;
+            let tag2aCount = 0;
+            let tag2bCount = 0;
+
+            selectedResults.forEach(result => {
+                const index = result.getAttribute("data-index");
+                const subTag = elements[index].subTag;
+                if (subTag === "タグ1a") {
+                    tag1aCount++;
+                } else if (subTag === "タグ1b") {
+                    tag1bCount++;
+                } else if (subTag === "タグ2a") {
+                    tag2aCount++;
+                } else if (subTag === "タグ2b") {
+                    tag2bCount++;
+                }
+            });
+
+            const finalContainer = document.getElementById("finalContainer");
+            finalContainer.innerHTML = "";
+            finalContainer.classList.remove("hidden");
+
+            let itemsToShow = [];
+
+            if (tag1aCount > tag1bCount) {
+                const tag1b1Elements = elements.filter(element => element.subSubTag === "タグ1b1");
+                const tag1b2Elements = elements.filter(element => element.subSubTag === "タグ1b2");
+                if (tag1b1Elements.length > 0) itemsToShow.push(tag1b1Elements.sort(() => 0.5 - Math.random())[0]);
+                if (tag1b2Elements.length > 0) itemsToShow.push(tag1b2Elements.sort(() => 0.5 - Math.random())[0]);
+            } else if (tag1bCount > tag1aCount) {
+                const tag1a1Elements = elements.filter(element => element.subSubTag === "タグ1a1");
+                const tag1a2Elements = elements.filter(element => element.subSubTag === "タグ1a2");
+                if (tag1a1Elements.length > 0) itemsToShow.push(tag1a1Elements.sort(() => 0.5 - Math.random())[0]);
+                if (tag1a2Elements.length > 0) itemsToShow.push(tag1a2Elements.sort(() => 0.5 - Math.random())[0]);
+            } else if (tag2aCount > tag2bCount) {
+                const tag2b1Elements = elements.filter(element => element.subSubTag === "タグ2b1");
+                const tag2b2Elements = elements.filter(element => element.subSubTag === "タグ2b2");
+                if (tag2b1Elements.length > 0) itemsToShow.push(tag2b1Elements.sort(() => 0.5 - Math.random())[0]);
+                if (tag2b2Elements.length > 0) itemsToShow.push(tag2b2Elements.sort(() => 0.5 - Math.random())[0]);
+            } else {
+                const tag2a1Elements = elements.filter(element => element.subSubTag === "タグ2a1");
+                const tag2a2Elements = elements.filter(element => element.subSubTag === "タグ2a2");
+                if (tag2a1Elements.length > 0) itemsToShow.push(tag2a1Elements.sort(() => 0.5 - Math.random())[0]);
+                if (tag2a2Elements.length > 0) itemsToShow.push(tag2a2Elements.sort(() => 0.5 - Math.random())[0]);
+            }
+
+            itemsToShow.forEach(item => {
+                if (item) {
+                    const div = document.createElement("div");
+                    div.className = "final";
+                    div.textContent = item.text;
+                    finalContainer.appendChild(div);
+                }
+            });
+        }
+
+        // 初期表示
+        displayElements();
+
+
+
+        const videoBackground = document.getElementById('video-background');
+        const loadingPlaceholder = document.getElementById('loading-placeholder');
+
+        videoBackground.addEventListener('load', function() {
+            loadingPlaceholder.style.display = 'none';
+            videoBackground.style.opacity = '1';
+        });
+    </script>
+</body>
+</html>
